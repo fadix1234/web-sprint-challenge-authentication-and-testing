@@ -13,8 +13,8 @@ function find() {
 }
 
  async function findBy(filter) {
-    const [user] = await db("users").where(filter)
-    return user
+    // const [user] = await 
+    return db("users").where(filter)
     // return db("users")
     //     .where({ username })
     //     .select("id", "username", "password")

@@ -12,38 +12,41 @@ router.post('/register', async (req, res) => {
   if (!user.username || !user.password) {
     return res.status(400).json({ error: 'username and password required' });
   }
-
-   try {
-    const {username, password} = req.body
+  User.findBy({ username: user.username })
+  .then(existingUser => {
+    console.log(existingUser)
+    if (existingUser.length) {
+      return res.status(409).json({ error: 'username taken' });
+    }
+  })
+  try {
+    const { username, password } = req.body
 
     const hash = bcrypt.hashSync(user.password, BCRYPT_ROUNDS)
 
-    const newUser = await User.add({username, password: hash})
+    const newUser = await User.add({ username, password: hash })
 
     res.status(201).json(newUser)
-    
-   } catch (error) {
-    
-   }
-  // User.findBy({ username: user.username })
-  //   .then(existingUser => {
-  //     if (existingUser) {
-  //       return res.status(409).json({ error: 'username taken' });
-  //     }
 
-  //     const hash = bcrypt.hashSync(user.password, BCRYPT_ROUNDS)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while registering the user.' });
+  }
+ 
 
-  //     user.password = hash
+  // .catch(err => {
+  //   res.status(500).json({ error: 'An error occurred while registering the user.' });
+  //   res.end('implement register, please!');
+  // });
+  // const hash = bcrypt.hashSync(user.password, BCRYPT_ROUNDS)
 
-  //     User.add(user)
-  //       .then(saved => {
-  //         res.status(201).json(user)
-  //       })
-  //       .catch(err => {
-  //         res.status(500).json({ error: 'An error occurred while registering the user.' });
-  //         res.end('implement register, please!');
-  //       });
-  //   })
+  // user.password = hash
+
+  // User.add(user)
+  //   .then(saved => {
+  //     res.status(201).json(user)
+
+
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -74,45 +77,46 @@ router.post('/register', async (req, res) => {
 
 
 
-// router.post('/login', (req, res) => {
-//   const { username, password } = req.body;
+router.post('/login', (req, res) => {
+  const { username, password } = req.body;
 
-//   if (!username || !password) {
-//     return res.status(400).json({ error: 'username and password required' });
-//   }
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password required' });
+  }
 
-//   User.findBy({ username })
-//     .then(user => {
-//       if (user && bcrypt.compareSync(password, user.password)) {
+  User.findBy({ username })
+    .then(user => {
+      console.log(user)
+      if (user.length && bcrypt.compareSync(password, user[0].password)) {
 
-//         const token = generateToken(user);
-
-
-//         res.status(200).json({
-//           message: `welcome, ${user.username}`,
-//           token,
-//         });
-//       } else {
-
-//         res.status(401).json({ error: 'invalid credentials' });
-//       }
-//     })
-//     .catch(err => {
-//       res.status(500).json({ error: 'An error occurred while logging in.' });
-//     });
-// });
+        const token = generateToken(user);
 
 
-// function generateToken(user) {
-//   const payload = {
-//     subject: user.id,
-//     username: user.username,
-//   };
-//   const options = {
-//     expiresIn: '1d', 
-//   };
-//   return jwt.sign(payload, secret.JWT_SECRET, options);
-// };
+        res.status(200).json({
+          message: `welcome, ${user[0].username}`,
+          token,
+        });
+      } else {
+
+        res.status(401).json({ error: 'invalid credentials' });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ error: 'An error occurred while logging in.' });
+    });
+});
+
+
+function generateToken(user) {
+  const payload = {
+    subject: user.id,
+    username: user.username,
+  };
+  const options = {
+    expiresIn: '1d',
+  };
+  return jwt.sign(payload, secret.JWT_SECRET, options);
+};
 /*
   IMPLEMENT
   You are welcome to build additional middlewares to help with the endpoint's functionality.
