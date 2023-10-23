@@ -7,32 +7,32 @@ const secret = require('../secrets/secret.js');
 const { BCRYPT_ROUNDS } = require('../../jest.config.js')
 
 router.post('/register', async (req, res) => {
-  let user = req.body
+  try {
+    const { username, password } = req.body;
 
-  if (!user.username || !user.password) {
-    return res.status(400).json({ error: 'username and password required' });
-  }
-  User.findBy({ username: user.username })
-  .then(existingUser => {
-    console.log(existingUser)
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username and password required' });
+    }
+
+    const existingUser = await User.findBy({ username: username });
+    console.log(existingUser);
+
     if (existingUser.length) {
       return res.status(409).json({ error: 'username taken' });
     }
-  })
-  try {
-    const { username, password } = req.body
 
-    const hash = bcrypt.hashSync(user.password, BCRYPT_ROUNDS)
+    const hash = bcrypt.hashSync(password, BCRYPT_ROUNDS);
+    const newUser = await User.add({ username, password: hash });
+    console.log(newUser);
 
-    const newUser = await User.add({ username, password: hash })
-
-    res.status(201).json(newUser)
-
+    res.status(201).json(newUser);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred while registering the user.' });
   }
- 
+});
+
+
 
   // .catch(err => {
   //   res.status(500).json({ error: 'An error occurred while registering the user.' });
@@ -72,7 +72,6 @@ router.post('/register', async (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
-});
 
 
 
